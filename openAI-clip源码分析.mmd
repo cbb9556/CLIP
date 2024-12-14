@@ -1,0 +1,103 @@
+[Scia Reto](https://sciareto.org) mind map   
+> __version__=`1.1`,showJumps=`true`
+---
+
+# clip源码
+> mmd.emoticon=`tree`
+
+
+## 文本编码器
+
+### 输入的text需要格式化
+
+#### text = clip\.tokenize\(\["a diagram", "a dog", "a cat"\]\)\.to\(device\)
+
+### model\.encode\_text\(text\)
+
+#### 将 分词变为向量
+
+##### x = self\.token\_embedding\(text\)\.type\(self\.dtype\) 
+
+#### 添加位置编码
+
+##### x = x \+ self\.positional\_embedding\.type\(self\.dtype\)
+
+##### 相加形式的，可学习的绝对位置编码
+
+#### 注意力模型， 
+
+##### 多层残差 atten
+
+###### x = x \+ self\.attention\(self\.ln\_1\(x\)\)<br/>        x = x \+ self\.mlp\(self\.ln\_2\(x\)\)
+
+###### ResidualAttentionBlock
+
+####### MultiheadAttention
+
+####### mlp
+
+######## LayerNorm
+
+######## Linear
+
+######## quicGelu
+
+######## Linear
+
+#### self\.ln\_final = LayerNorm\(transformer\_width\)
+
+#### mlp投影映射
+
+##### x = x\[torch\.arange\(x\.shape\[0\]\), text\.argmax\(dim=\-1\)\] @ self\.text\_projection
+
+## 图像编码器
+
+### vit
+
+#### nn\.Conv2d\(in\_channels=3, out\_channels=width, kernel\_size=patch\_size, stride=patch\_size, bias=False\)
+
+#### patch化
+
+##### x = x\.reshape\(x\.shape\[0\], x\.shape\[1\], \-1\)  \# shape = \[\*, width, grid \*\* 2\]<br/>        x = x\.permute\(0, 2, 1\)  \# shape = \[\*, grid \*\* 2, width\]<br/>        x = torch\.cat\(\[self\.class\_embedding\.to\(x\.dtype\) \+ torch\.zeros\(x\.shape\[0\], 1, x\.shape\[\-1\], dtype=x\.dtype, device=x\.device\), x\], dim=1\)  \# shape = \[\*, grid \*\* 2 \+ 1, width\]
+> align=`left`
+
+
+#### 添加位置编码
+
+#####  x = x \+ self\.positional\_embedding\.to\(x\.dtype\)
+
+#### pre ln 标准化
+
+##### self\.ln\_pre = LayerNorm\(width\)
+
+####  x = x\.permute\(1, 0, 2\)
+
+#### x = self\.transformer\(x\) 自注意力
+
+##### 多层残差 atten
+
+###### ResidualAttentionBlock
+
+####### MultiheadAttention
+
+####### mlp
+
+######## LayerNorm
+
+######## Linear
+
+######## quicGelu
+
+######## Linear
+
+#### x = x\.permute\(1, 0, 2\)
+
+#### post ln
+
+##### self\.ln\_post = LayerNorm\(width\)
+
+#### 线性投影映射
+
+#####  x = x @ self\.proj
+
+###### self\.proj = nn\.Parameter\(scale \* torch\.randn\(width, output\_dim\)\)

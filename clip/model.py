@@ -184,6 +184,10 @@ class ResidualAttentionBlock(nn.Module):
 
     def attention(self, x: torch.Tensor):
         self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
+        # 使用self.attn（一个注意力层）对输入x进行自我注意力计算
+        # 参数x用作查询、键和值，这意味着该行代码旨在捕捉输入x中的重要信息
+        # need_weights=False表示不需要返回注意力权重，只返回注意力计算后的结果
+        # attn_mask=self.attn_mask应用了一个预定义的注意力掩码，用于在注意力计算中屏蔽某些部分的信息
         return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
 
     def forward(self, x: torch.Tensor):
@@ -290,7 +294,7 @@ class CLIP(nn.Module):
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
         self.positional_embedding = nn.Parameter(torch.empty(self.context_length, transformer_width))
         self.ln_final = LayerNorm(transformer_width)
-
+        # 将文本嵌入（假设其维度为 transformer_width）投影到视觉嵌入空间（假设其维度为 embed_dim）。
         self.text_projection = nn.Parameter(torch.empty(transformer_width, embed_dim))
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
